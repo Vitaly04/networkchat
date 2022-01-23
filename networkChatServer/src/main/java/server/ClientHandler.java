@@ -8,23 +8,27 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class ClientHandler implements Runnable {
     private final Server server;
     private final Socket socket;
     private PrintWriter out;
-    private static int clients_count = 0;
+    private static final AtomicInteger quantityOfClients = new AtomicInteger();
+    private static final Logger logger = Logger.getLogger(Server.class.getName());
     private final ConverterToJson converter;
 
     public ClientHandler(Server server, java.net.Socket socket) {
         this.converter = new ConverterToJson();
-        clients_count++;
+        quantityOfClients.incrementAndGet();
         this.server = server;
         this.socket = socket;
         try {
             this.out = new PrintWriter(socket.getOutputStream(), true);
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.log(Level.SEVERE, "output stream error", e);
         }
     }
 
@@ -36,7 +40,7 @@ public class ClientHandler implements Runnable {
             String clientName = in.readLine();
             sendMessage(converter.listToJson(server.getHistoryMessage()));
             server.sendMessageAllClients(new Message("сервер","Новый участник " + clientName + " вошёл в чат!"));
-            server.sendMessageAllClients(new Message("сервер","Клиентов в чате = " + clients_count));
+            server.sendMessageAllClients(new Message("сервер","Клиентов в чате = " + quantityOfClients.get()));
 
             while (true) {
                 final String textMessage = in.readLine();
@@ -48,9 +52,10 @@ public class ClientHandler implements Runnable {
             }
             server.sendMessageAllClients(new Message("сервер","Участик " + clientName + " вышёл из чата!"));
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.log(Level.SEVERE, "input output stream error", e);
         } finally {
             this.close();
+            out.close();
         }
     }
 
@@ -59,13 +64,13 @@ public class ClientHandler implements Runnable {
             out.println(message);
             out.flush();
         } catch (Exception ex) {
-            ex.printStackTrace();
+            logger.log(Level.SEVERE, "output stream error");
         }
     }
 
     private void close() {
         server.removeClient(this);
-        clients_count--;
-        server.sendMessageAllClients(new Message("сервер","Клиентов в чате = " + clients_count));
+        quantityOfClients.decrementAndGet();
+        server.sendMessageAllClients(new Message("сервер","Клиентов в чате = " + quantityOfClients.get()));
     }
 }

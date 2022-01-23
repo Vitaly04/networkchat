@@ -13,7 +13,7 @@ public class ConverterFromJson {
 
     public List<Message> jsonToList(String json) {
         JSONParser parser = new JSONParser();
-        ArrayList<Message> list = new ArrayList<>();
+        List<Message> list = new ArrayList<>();
         JSONArray jsonArray = null;
 
         try {

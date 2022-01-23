@@ -8,24 +8,29 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Server {
     private final int port;
-    private final ArrayList<ClientHandler> clients = new ArrayList<>();
-    private final ArrayList<Message> historyMessage = new ArrayList<>();
-
-    private final LoggerMessage logger;
+    private final Map<ClientHandler, ClientHandler> clients = new ConcurrentHashMap();
+    private final Map<Message, Message> historyMessage = new ConcurrentHashMap<>();
+    private static final Logger logger = Logger.getLogger(Server.class.getName());
+    private final LoggerMessage loggerMessage;
     private final ConverterToJson converter;
 
 
     public Server(int port) {
         this.converter = new ConverterToJson();
         this.port = port;
-        this.logger = new LoggerMessage();
+        this.loggerMessage = new LoggerMessage();
     }
 
-    public ArrayList<Message> getHistoryMessage() {
-        return historyMessage;
+    public List<Message> getHistoryMessage() {
+        return new ArrayList<>(historyMessage.values());
     }
 
     public void execute() {
@@ -33,20 +38,19 @@ public class Server {
             while (true) {
                 Socket socket = serverSocket.accept();
                 ClientHandler client = new ClientHandler( this, socket);
-                clients.add(client);
+                clients.put(client, client);
                 Thread thread1 = new Thread(client);
                 thread1.start();
             }
-
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.log(Level.SEVERE, "server socket connection error", e);
         }
     }
 
     public void sendMessageAllClients(Message message) {
-        historyMessage.add(message);
-        logger.logFile(message);
-        for (ClientHandler clientHandler : clients) {
+        historyMessage.put(message, message);
+        loggerMessage.logFile(message);
+        for (ClientHandler clientHandler : clients.keySet()) {
             clientHandler.sendMessage(converter.createJson(message));
         }
     }

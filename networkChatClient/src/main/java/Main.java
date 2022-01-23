@@ -1,6 +1,4 @@
 import chatClient.ChatClient;
-import chatClient.ReadThread;
-import chatClient.WriteThread;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -16,12 +14,7 @@ public class Main {
         List<String> settings = readSettings();
         System.out.println("Настройки для подключения к серверу : " + "\nhostname = " + settings.get(2) + ", port = " + settings.get(6));
         ChatClient client = new ChatClient(settings.get(2), Integer.parseInt(settings.get(6)), userName);
-        ReadThread readThread = new ReadThread(client);
-        WriteThread writeThread = new WriteThread(client);
-        Thread thread1 = new Thread(readThread);
-        Thread thread2 = new Thread(writeThread);
-        thread1.start();
-        thread2.start();
+        client.execute();
     }
 
     private static List<String> readSettings() throws FileNotFoundException {

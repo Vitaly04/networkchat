@@ -2,7 +2,7 @@ package message;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.List;
 
 public class LoggerMessage {
 
@@ -15,7 +15,7 @@ public class LoggerMessage {
         }
     }
 
-    public void logListMessage(ArrayList<Message> list) {
+    public void logListMessage(List<Message> list) {
         for (Message message : list) {
             logMessage(message);
         }
